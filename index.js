@@ -64,7 +64,7 @@ controller.hears(['quip'], ['direct_mention'], function (bot, message) {
     }
 });
 
-controller.hears('hello', 'direct_message', function (bot, message) {
+controller.on('direct_message', function (bot, message) {
     bot.reply(message, 'Just like Jay Leno on NBC, I only quip on channels.');
 });
 
