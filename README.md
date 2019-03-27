@@ -7,12 +7,16 @@ No guarantees are provided on appropriateness of the quips.
 This bot is a fork of https://github.com/slackapi/easy-peasy-bot.
 
 ## Usage
-In Slack, invite the bot user to the room you want it to monitor. Then, provoke quips with messages like:
+In Slack, invite the bot user to the room you want it to monitor. Then, provoke quips with a message like:
 ```
 @<botname> quip
 ```
 
 ## Installing
+In the repository:
+```bash
+npm install
+```
 
 ## Running
 After you've created a bot account on slack, grab the token, and run:
