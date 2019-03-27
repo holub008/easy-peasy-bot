@@ -1,58 +1,28 @@
 /**
  * A Bot for Slack!
  */
+const fs = require('fs');
 
-
-/**
- * Define a function for initiating a conversation on installation
- * With custom integrations, we don't have a way to find out who installed us, so we can't message them :(
- */
-
-function onInstallation(bot, installer) {
-    if (installer) {
-        bot.startPrivateConversation({user: installer}, function (err, convo) {
-            if (err) {
-                console.log(err);
-            } else {
-                convo.say('I am a bot that has just joined your team');
-                convo.say('You must now /invite me to a channel so that I can be of use!');
-            }
-        });
-    }
-}
-
-
-/**
- * Configure the persistence options
- */
-
-var config = {};
-if (process.env.MONGOLAB_URI) {
-    var BotkitStorage = require('botkit-storage-mongo');
-    config = {
-        storage: BotkitStorage({mongoUri: process.env.MONGOLAB_URI}),
+const config = {
+        json_file_store: './db_slack_bot_ci/',
     };
-} else {
-    config = {
-        json_file_store: ((process.env.TOKEN)?'./db_slack_bot_ci/':'./db_slack_bot_a/'), //use a different name if an app or CI
-    };
-}
+
+var quips = [];
+fs.readFile('./quips.txt', 'utf8', function(err, contents) {
+                              quips = contents.split('\n');
+                          });
 
 /**
  * Are being run as an app or a custom integration? The initialization will differ, depending
  */
 
-if (process.env.TOKEN || process.env.SLACK_TOKEN) {
+if (process.env.TOKEN) {
     //Treat this as a custom integration
-    var customIntegration = require('./lib/custom_integrations');
-    var token = (process.env.TOKEN) ? process.env.TOKEN : process.env.SLACK_TOKEN;
-    var controller = customIntegration.configure(token, config, onInstallation);
-} else if (process.env.CLIENT_ID && process.env.CLIENT_SECRET && process.env.PORT) {
-    //Treat this as an app
-    var app = require('./lib/apps');
-    var controller = app.configure(process.env.PORT, process.env.CLIENT_ID, process.env.CLIENT_SECRET, config, onInstallation);
+    const customIntegration = require('./lib/custom_integrations');
+    const token = process.env.TOKEN;
+    var controller = customIntegration.configure(token, config, (bot, installer) => {});
 } else {
-    console.log('Error: If this is a custom integration, please specify TOKEN in the environment. If this is an app, please specify CLIENTID, CLIENTSECRET, and PORT in the environment');
+    console.log('Error: Must supply a TOKEN environment variable');
     process.exit(1);
 }
 
@@ -85,8 +55,17 @@ controller.on('bot_channel_join', function (bot, message) {
     bot.reply(message, "I'm here!")
 });
 
+controller.hears(['quip'], ['direct_mention'], function (bot, message) {
+    if (quips) {
+        const randomQuip = quips[Math.floor(Math.random() * quips.length)]
+        bot.reply(message, randomQuip);
+    } else {
+        bot.reply(message, "The quips aren't coming, the quips just aren't coming.");
+    }
+});
+
 controller.hears('hello', 'direct_message', function (bot, message) {
-    bot.reply(message, 'Hello!');
+    bot.reply(message, 'Just like Jay Leno on NBC, I only quip on channels.');
 });
 
 
